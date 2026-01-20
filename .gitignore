@@ -1,3 +1,6 @@
+/notes
+/temp
+
 *.pyc
 .vscode/
 .env
