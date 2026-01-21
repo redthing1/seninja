@@ -2,37 +2,19 @@ import sys
 
 from binaryninja import (
     BinaryReader, BinaryWriter,
-    RegisterValueType, enums
+    RegisterValueType
 )
 from .sym_visitor import SymbolicVisitor
 from .sym_state import State
-from .utility.bninja_util import (
-    get_imported_functions_and_addresses,
-    find_os
-)
+from .utility.bninja_util import get_imported_functions_and_addresses
 from .utility.expr_wrap_util import symbolic
-from .arch.arch_x86 import x86Arch
-from .arch.arch_x86_64 import x8664Arch
-from .arch.arch_armv7 import ArmV7Arch
-from .arch.arch_aarch64 import AArch64Arch
+from .target.context import resolve_target
 from .utility import exceptions
 from .expr import BVV, BVS
 from .utility.binary_ninja_cache import BNCache
 from .memory.sym_memory import InitData
 from .multipath.fringe import Fringe
 from .globals import logger
-
-def find_arch(view):
-    if view.arch.name == "x86":
-        return x86Arch()
-    elif view.arch.name == "x86_64":
-        return x8664Arch()
-    elif view.arch.name == "armv7":
-        return ArmV7Arch()
-    elif view.arch.name == "aarch64":
-        return AArch64Arch()
-    
-    raise exceptions.UnsupportedArch(view.arch.name)
 
 class SymbolicExecutor(object):
     def __init__(self, view, addr):
@@ -58,10 +40,21 @@ class SymbolicExecutor(object):
 
         self._wasjmp = False
 
-        self.arch = find_arch(self.view)
+        self.target = resolve_target(self.view)
+        self.arch = self.target.arch
+        logger.log_info(
+            "target resolved: arch=%s os=%s abi=%s syscall=%s layout=%s/%s"
+            % (
+                type(self.target.arch).__name__,
+                type(self.target.os).__name__,
+                type(self.target.abi).__name__,
+                type(self.target.syscall_abi).__name__,
+                self.target.layout.ptr_bits,
+                self.target.layout.endian,
+            )
+        )
         page_size = int(self.bncache.get_setting("memory.page_size"))
-        self.state = State(self, arch=self.arch,
-                           os=find_os(view), page_size=page_size)
+        self.state = State(self, target=self.target, page_size=page_size)
 
         # load memory
         logger.log_info("loading segments...")

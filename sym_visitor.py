@@ -1,31 +1,14 @@
-from binaryninja import (
-    BinaryReader, BinaryWriter,
-    RegisterValueType, enums
-)
+from binaryninja import RegisterValueType
 from binaryninja.lowlevelil import ILRegister
-from .sym_state import State
-from .arch.arch_x86 import x86Arch
-from .arch.arch_x86_64 import x8664Arch
-from .arch.arch_armv7 import ArmV7Arch
 from .models.function_models import library_functions
-from .utility.expr_wrap_util import (
-    bvv_from_bytes, symbolic
-)
+from .utility.expr_wrap_util import symbolic
 from .utility.exceptions import (
     UnimplementedInstruction, DivByZero, NoDestination,
     UnconstrainedIp, UnsatState, ExitException,
     UnimplementedModel, UnimplementedSyscall
 )
-from .expr import BV, BVV, BVS, Bool, BoolV, ITE, And, Or
+from .expr import BV, BVV, Bool, BoolV, ITE, And, Or
 from .globals import logger
-from .utility.bninja_util import (
-    get_imported_functions_and_addresses,
-    find_os,
-    parse_disasm_str
-)
-from .utility.binary_ninja_cache import BNCache
-from .memory.sym_memory import InitData
-from .multipath.fringe import Fringe
 
 
 class BNILVisitor(object):
@@ -76,17 +59,6 @@ class SymbolicVisitor(BNILVisitor):
         dest = expr.dest.name
         src = self.visit(expr.src)
 
-        # X86_64 fix
-        if isinstance(self.executor.arch, x8664Arch):
-            if dest in {
-                'eax',  'ebx',  'ecx',  'edx',
-                'edi',  'esi',  'esp',  'ebp',
-                'r8d',  'r9d',  'r10d', 'r11d',
-                'r12d', 'r13d', 'r14d', 'r15d'
-            }:
-                dest = ("r" + dest[1:]) if dest[0] == 'e' else dest[:-1]
-                src = src.ZeroExt(32)
-
         if isinstance(src, Bool):
             src = ITE(
                 src,
@@ -95,6 +67,12 @@ class SymbolicVisitor(BNILVisitor):
             )
         if src.size == 1:
             src = src.ZeroExt(8)
+
+        dest, src = self.executor.arch.normalize_reg_write(
+            dest, src, expr.dest.info.size
+        )
+        if dest is None:
+            return True
 
         setattr(self.executor.state.regs, dest, src)
         return True
@@ -945,8 +923,7 @@ class SymbolicVisitor(BNILVisitor):
         return src.ZeroExt(dest_size - src.size)
 
     def visit_LLIL_SYSCALL(self, expr):
-        n_reg = self.executor.state.os.get_syscall_n_reg()
-        n = getattr(self.executor.state.regs, n_reg)
+        n = self.executor.state.syscall_abi.get_number(self.executor.state)
         assert not symbolic(n), "SYSCALL: symbolic syscall number"
         n = n.value
 
@@ -955,8 +932,7 @@ class SymbolicVisitor(BNILVisitor):
             raise UnimplementedSyscall(n)
 
         res = handler(self.executor.state)
-        res_reg = self.executor.state.os.get_out_syscall_reg()
-        setattr(self.executor.state.regs, res_reg, res)
+        self.executor.state.syscall_abi.set_return(self.executor.state, res)
 
         return True
 
