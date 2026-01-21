@@ -2,6 +2,7 @@
 /temp
 
 *.pyc
+__pycache__/
 .vscode/
 .env
 *.DS_Store
