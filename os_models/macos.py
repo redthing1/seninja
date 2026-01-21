@@ -1,4 +1,3 @@
-from copy import deepcopy
 from ..expr import Bool
 from .os_file import OsFileHandler
 
@@ -10,15 +9,6 @@ class MacOS(OsFileHandler):
         self.stdout_fd = self.open("__stdout", "-w-")
 
     def get_syscall_by_number(self, n):
-        raise NotImplementedError
-
-    def get_syscall_n_reg(self):
-        raise NotImplementedError
-
-    def get_syscall_parameter(self, k):
-        raise NotImplementedError
-
-    def get_out_syscall_reg(self):
         raise NotImplementedError
 
     def get_stdin_stream(self):

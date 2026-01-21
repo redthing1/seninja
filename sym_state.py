@@ -1,6 +1,3 @@
-from .arch.arch_abstract import Arch
-from .arch.arch_x86_64 import x8664Arch
-from .os_models.os_abstract import Os
 from .memory.registers import Regs
 from .memory.sym_memory import Memory
 from .sym_solver import Solver
@@ -9,14 +6,18 @@ from .expr import BV, BVV
 
 
 class State(object):
-    def __init__(self, executor, os: Os, arch: Arch = x8664Arch(), page_size: int = 0x1000):
+    def __init__(self, executor, target, page_size: int = 0x1000):
         self.page_size = page_size
-        self.arch = arch
-        self.mem = Memory(self, page_size, arch.bits(),
+        self.target = target
+        self.arch = target.arch
+        self.os = target.os
+        self.abi = target.abi
+        self.syscall_abi = target.syscall_abi
+        self.layout = target.layout
+        self.mem = Memory(self, page_size, self.arch.bits(),
                           not executor.init_with_zero)
         self.regs = Regs(self)
         self.solver = Solver(self)
-        self.os = os
         self.events = list()
         self.insn_history = set()
         self.llil_ip = None
@@ -46,8 +47,9 @@ class State(object):
     def initialize_stack(self, stack_base):
         setattr(self.regs, self.arch.get_stack_pointer_reg(),
                 BVV(stack_base, self._bits))
-        setattr(self.regs, self.arch.get_base_pointer_reg(),
-                BVV(stack_base, self._bits))
+        base_reg = self.arch.get_base_pointer_reg()
+        if base_reg:
+            setattr(self.regs, base_reg, BVV(stack_base, self._bits))
 
     def stack_push(self, val: BV):
         stack_pointer = getattr(self.regs, self.arch.get_stack_pointer_reg())
@@ -70,8 +72,10 @@ class State(object):
         setattr(self.regs, self._ipreg, BVV(new_ip, self._bits))
 
     def copy(self, solver_copy_fast=False):
-        new_state = State(self.executor, self.os.copy(),
-                          self.arch, self.page_size)
+        new_os = self.os.copy()
+        new_target = self.target.clone_with(os_model=new_os)
+        new_state = State(self.executor, target=new_target,
+                          page_size=self.page_size)
         new_state.mem = self.mem.copy(new_state)
         new_state.regs = self.regs.copy(new_state)
         new_state.solver = self.solver.copy(new_state, solver_copy_fast)

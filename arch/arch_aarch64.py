@@ -636,6 +636,27 @@ class AArch64Arch(Arch):
         res = AArch64Arch.sph.handle_instruction(disasm_str, sv)
         return res
 
+    def normalize_reg_write(self, reg_name, value, dest_size_bytes):
+        if reg_name in ("xzr", "wzr"):
+            return None, value
+        if reg_name.startswith("w"):
+            if reg_name == "wsp":
+                full_reg = "sp"
+            elif reg_name == "w29":
+                full_reg = "fp"
+            elif reg_name == "w30":
+                full_reg = "lr"
+            else:
+                full_reg = "x" + reg_name[1:]
+            if full_reg in AArch64Arch.REGS:
+                full_size_bits = AArch64Arch.REGS[full_reg]["size"] * 8
+                if value.size < full_size_bits:
+                    value = value.ZeroExt(full_size_bits - value.size)
+                elif value.size > full_size_bits:
+                    value = value.Extract(full_size_bits - 1, 0)
+                return full_reg, value
+        return reg_name, value
+
     def is_synthetic_reg(self, reg_name):
         # pc and xzr aren't queryable via binja
         return reg_name in ['pc', 'xzr']

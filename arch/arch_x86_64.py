@@ -492,5 +492,22 @@ class x8664Arch(Arch):
         res = x8664Arch.sph.handle_instruction(disasm_str, sv)
         return res
 
+    def normalize_reg_write(self, reg_name, value, dest_size_bytes):
+        zero_extend_regs = {
+            'eax',  'ebx',  'ecx',  'edx',
+            'edi',  'esi',  'esp',  'ebp',
+            'r8d',  'r9d',  'r10d', 'r11d',
+            'r12d', 'r13d', 'r14d', 'r15d'
+        }
+        if reg_name in zero_extend_regs:
+            full_reg = ("r" + reg_name[1:]) if reg_name[0] == 'e' else reg_name[:-1]
+            full_size_bits = x8664Arch.REGS[full_reg]['size'] * 8
+            if value.size < full_size_bits:
+                value = value.ZeroExt(full_size_bits - value.size)
+            elif value.size > full_size_bits:
+                value = value.Extract(full_size_bits - 1, 0)
+            return full_reg, value
+        return reg_name, value
+
 
 Arch.fix_reg_addressess(x8664Arch)
