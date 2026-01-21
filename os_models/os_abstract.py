@@ -3,14 +3,8 @@ class Os(object):
     def get_syscall_by_number(self, n):
         raise NotImplementedError
 
-    def get_syscall_n_reg(self):
-        raise NotImplementedError
-
-    def get_syscall_parameter(self, k):
-        raise NotImplementedError
-
-    def get_out_syscall_reg(self):
-        raise NotImplementedError
+    def get_syscall_abi(self, view, arch):
+        return None
     # devices
 
     def open(self, filename, mode):

@@ -1,18 +1,14 @@
 from ..utility.expr_wrap_util import symbolic
 from ..utility.exceptions import ExitException, ModelError
-from ..expr import BVV, BVS
+from ..expr import BVV
 
 MAX_SYM_READ_WRITE = 100
 
 
 def read_handler(state):
-    fd_reg = state.os.get_syscall_parameter(1)
-    buf_reg = state.os.get_syscall_parameter(2)
-    count_reg = state.os.get_syscall_parameter(3)
-
-    fd = getattr(state.regs, fd_reg)
-    buf = getattr(state.regs, buf_reg)
-    count = getattr(state.regs, count_reg)
+    fd = state.syscall_abi.get_arg(state, 0)
+    buf = state.syscall_abi.get_arg(state, 1)
+    count = state.syscall_abi.get_arg(state, 2)
 
     if symbolic(fd) and state.solver.symbolic(fd):
         raise ModelError("linux_read", "symbolic fd not supported")
@@ -37,13 +33,9 @@ def read_handler(state):
 
 
 def write_handler(state):
-    fd_reg = state.os.get_syscall_parameter(1)
-    buf_reg = state.os.get_syscall_parameter(2)
-    count_reg = state.os.get_syscall_parameter(3)
-
-    fd = getattr(state.regs, fd_reg)
-    buf = getattr(state.regs, buf_reg)
-    count = getattr(state.regs, count_reg)
+    fd = state.syscall_abi.get_arg(state, 0)
+    buf = state.syscall_abi.get_arg(state, 1)
+    count = state.syscall_abi.get_arg(state, 2)
 
     if symbolic(fd) and state.solver.symbolic(fd):
         raise ModelError("linux_write", "symbolic fd not supported")

@@ -49,6 +49,9 @@ class Arch(object):  # abstract class
     def execute_special_handler(self, disasm_str, sv):
         raise NotImplementedError
 
+    def normalize_reg_write(self, reg_name, value, dest_size_bytes):
+        return reg_name, value
+
     def is_synthetic_reg(self, reg_name):
         return False
 
