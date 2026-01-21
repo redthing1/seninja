@@ -1,12 +1,11 @@
-from copy import deepcopy
 from ..models import linux_syscalls as models
 from ..expr import Bool
 from .os_file import OsFileHandler
+from ..target.syscall import RegSyscallAbi
 
 
 class Linux(OsFileHandler):
     SYSCALL_TABLE = {}
-    SYSCALL_PARAMS = {}
 
     def __init__(self):
         super().__init__()
@@ -17,10 +16,6 @@ class Linux(OsFileHandler):
         if n not in self.SYSCALL_TABLE:
             return None
         return self.SYSCALL_TABLE[n]
-
-    def get_syscall_parameter(self, k: int):
-        assert 0 < k <= 6
-        return self.SYSCALL_PARAMS[k-1]
 
     def get_stdin_stream(self):
         session = self.descriptors_map[self.stdin_fd]
@@ -43,7 +38,7 @@ class Linux(OsFileHandler):
     def copy_to(self, other):
         super().copy_to(other)
         other.stdin_fd = self.stdin_fd
-        other.stdout_fd = other.stdout_fd
+        other.stdout_fd = self.stdout_fd
 
 
 class Linuxi386(Linux):
@@ -52,15 +47,13 @@ class Linuxi386(Linux):
         3: models.read_handler,
         4: models.write_handler
     }
-    SYSCALL_PARAMS = [
-        "ebx",   "ecx",   "edx",   "esi",   "edi",   "ebp"
-    ]
 
-    def get_syscall_n_reg(self):
-        return "eax"
-
-    def get_out_syscall_reg(self):
-        return "eax"
+    def get_syscall_abi(self, view, arch):
+        return RegSyscallAbi(
+            "eax",
+            ["ebx", "ecx", "edx", "esi", "edi", "ebp"],
+            "eax",
+        )
 
     def copy(self):
         res = Linuxi386()
@@ -78,15 +71,13 @@ class Linuxia64(Linux):
         1: models.write_handler,
         2: None
     }
-    SYSCALL_PARAMS = [
-        "rdi",	"rsi",	"rdx",	"r10",	"r8",	"r9"
-    ]
 
-    def get_syscall_n_reg(self):
-        return "rax"
-
-    def get_out_syscall_reg(self):
-        return "rax"
+    def get_syscall_abi(self, view, arch):
+        return RegSyscallAbi(
+            "rax",
+            ["rdi", "rsi", "rdx", "r10", "r8", "r9"],
+            "rax",
+        )
 
     def copy(self):
         res = Linuxia64()
@@ -104,15 +95,13 @@ class LinuxArmV7(Linux):
         0x900003: models.read_handler,
         0x900004: models.write_handler
     }
-    SYSCALL_PARAMS = [
-        "r0", "r1", "r2", "r3", "r4", "r5", "r6"
-    ]
 
-    def get_syscall_n_reg(self):
-        return "r7"
-
-    def get_out_syscall_reg(self):
-        return "r0"
+    def get_syscall_abi(self, view, arch):
+        return RegSyscallAbi(
+            "r7",
+            ["r0", "r1", "r2", "r3", "r4", "r5", "r6"],
+            "r0",
+        )
 
     def copy(self):
         res = LinuxArmV7()
@@ -130,15 +119,13 @@ class LinuxAArch64(Linux):
         63: models.read_handler,   # sys_read
         64: models.write_handler,  # sys_write
     }
-    SYSCALL_PARAMS = [
-        "x0", "x1", "x2", "x3", "x4", "x5", "x6", "x7"
-    ]
 
-    def get_syscall_n_reg(self):
-        return "x8"
-
-    def get_out_syscall_reg(self):
-        return "x0"
+    def get_syscall_abi(self, view, arch):
+        return RegSyscallAbi(
+            "x8",
+            ["x0", "x1", "x2", "x3", "x4", "x5", "x6", "x7"],
+            "x0",
+        )
 
     def copy(self):
         res = LinuxAArch64()

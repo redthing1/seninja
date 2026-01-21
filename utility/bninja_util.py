@@ -1,8 +1,4 @@
 from binaryninja import SymbolType
-from .exceptions import UnsupportedOs
-from ..os_models.linux import Linuxi386, Linuxia64, LinuxArmV7, LinuxAArch64
-from ..os_models.windows import Windows
-from ..os_models.macos import MacOS
 from ..globals import logger
 
 
@@ -74,25 +70,3 @@ def get_address_after_merge(view, address):
     llil = func.llil.get_instruction_start(address, func.arch)
     return func.llil[llil].address
 
-
-def find_os(view):
-    platform_name = view.platform.name
-
-    if platform_name == 'linux-x86_64':
-        return Linuxia64()
-    elif platform_name == 'linux-x86':
-        return Linuxi386()
-    elif platform_name == 'linux-armv7':
-        return LinuxArmV7()
-    elif platform_name == 'linux-aarch64':
-        return LinuxAArch64()
-    elif platform_name == 'windows-x86':
-        return Windows()
-    elif platform_name == 'windows-x86_64':
-        return Windows()
-    elif platform_name == 'mac-aarch64':
-        return MacOS()
-    elif platform_name == 'mac-x86_64':
-        return MacOS()
-
-    raise UnsupportedOs(platform_name)
