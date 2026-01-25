@@ -23,6 +23,7 @@ def _load_builtins():
     from ..arch.arch_x86 import x86Arch
     from ..arch.arch_x86_64 import x8664Arch
     from ..arch.arch_armv7 import ArmV7Arch
+    from ..arch.arch_arm32 import Arm32Arch
     from ..arch.arch_aarch64 import AArch64Arch
     from ..arch.arch_riscv import RiscVArch
     from ..os_models.linux import (
@@ -38,16 +39,26 @@ def _load_builtins():
     register_arch_adapter("x86", x86Arch)
     register_arch_adapter("x86_64", x8664Arch)
     register_arch_adapter("armv7", ArmV7Arch)
+    register_arch_adapter("armv7eb", Arm32Arch)
+    register_arch_adapter("thumb2", Arm32Arch)
+    register_arch_adapter("thumb2eb", Arm32Arch)
     register_arch_adapter("aarch64", AArch64Arch)
     register_arch_adapter("riscv32", RiscVArch)
     register_arch_adapter("riscv64", RiscVArch)
+    register_arch_adapter("rv32gc", RiscVArch)
+    register_arch_adapter("rv64gc", RiscVArch)
 
     register_os_model("linux-x86", Linuxi386)
     register_os_model("linux-x86_64", Linuxia64)
     register_os_model("linux-armv7", LinuxArmV7)
+    register_os_model("linux-armv7eb", LinuxArmV7)
+    register_os_model("linux-thumb2", LinuxArmV7)
+    register_os_model("linux-thumb2eb", LinuxArmV7)
     register_os_model("linux-aarch64", LinuxAArch64)
     register_os_model("linux-riscv32", LinuxRiscV)
     register_os_model("linux-riscv64", LinuxRiscV)
+    register_os_model("linux-rv32gc", LinuxRiscV)
+    register_os_model("linux-rv64gc", LinuxRiscV)
     register_os_model("windows-x86", Windows)
     register_os_model("windows-x86_64", Windows)
     register_os_model("mac-x86_64", MacOS)
