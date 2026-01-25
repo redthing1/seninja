@@ -24,7 +24,14 @@ def _load_builtins():
     from ..arch.arch_x86_64 import x8664Arch
     from ..arch.arch_armv7 import ArmV7Arch
     from ..arch.arch_aarch64 import AArch64Arch
-    from ..os_models.linux import Linuxi386, Linuxia64, LinuxArmV7, LinuxAArch64
+    from ..arch.arch_riscv import RiscVArch
+    from ..os_models.linux import (
+        Linuxi386,
+        Linuxia64,
+        LinuxArmV7,
+        LinuxAArch64,
+        LinuxRiscV,
+    )
     from ..os_models.windows import Windows
     from ..os_models.macos import MacOS
 
@@ -32,11 +39,15 @@ def _load_builtins():
     register_arch_adapter("x86_64", x8664Arch)
     register_arch_adapter("armv7", ArmV7Arch)
     register_arch_adapter("aarch64", AArch64Arch)
+    register_arch_adapter("riscv32", RiscVArch)
+    register_arch_adapter("riscv64", RiscVArch)
 
     register_os_model("linux-x86", Linuxi386)
     register_os_model("linux-x86_64", Linuxia64)
     register_os_model("linux-armv7", LinuxArmV7)
     register_os_model("linux-aarch64", LinuxAArch64)
+    register_os_model("linux-riscv32", LinuxRiscV)
+    register_os_model("linux-riscv64", LinuxRiscV)
     register_os_model("windows-x86", Windows)
     register_os_model("windows-x86_64", Windows)
     register_os_model("mac-x86_64", MacOS)

@@ -135,3 +135,27 @@ class LinuxAArch64(Linux):
     def merge(self, other, merge_condition: Bool):
         assert isinstance(other, LinuxAArch64)
         pass  # TODO implement this
+
+
+class LinuxRiscV(Linux):
+
+    SYSCALL_TABLE = {
+        63: models.read_handler,   # sys_read
+        64: models.write_handler,  # sys_write
+    }
+
+    def get_syscall_abi(self, view, arch):
+        return RegSyscallAbi(
+            "a7",
+            ["a0", "a1", "a2", "a3", "a4", "a5"],
+            "a0",
+        )
+
+    def copy(self):
+        res = LinuxRiscV()
+        super().copy_to(res)
+        return res
+
+    def merge(self, other, merge_condition: Bool):
+        assert isinstance(other, LinuxRiscV)
+        pass  # TODO implement this
